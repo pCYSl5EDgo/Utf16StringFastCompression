@@ -30,10 +30,10 @@ public static class Utf16CompressionEncoding
 
             scoped ref byte initialDestination = ref destination;
             scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
-            var status = uint.MaxValue;
+            var status = 0U;
             if (Vector256.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector256<byte>>())
             {
-                var isAscii = status != uint.MaxValue;
+                var isAscii = status != 0U;
                 var filter = Vector256.Create<ushort>(0xff80);
                 while (sourceLength >>> 5 != 0)
                 {
@@ -66,11 +66,11 @@ public static class Utf16CompressionEncoding
                         destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector256<byte>>() << 1);
                     }
                 }
-                status = isAscii ? 3U : uint.MaxValue;
+                status = isAscii ? 4U : 0U;
             }
             if (Vector128.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector128<byte>>())
             {
-                var isAscii = status != uint.MaxValue;
+                var isAscii = status != 0U;
                 var filter = Vector128.Create<ushort>(0xff80);
                 while (sourceLength >>> 4 != 0)
                 {
@@ -103,22 +103,22 @@ public static class Utf16CompressionEncoding
                         destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector128<byte>>() << 1);
                     }
                 }
-                status = isAscii ? 3U : uint.MaxValue;
+                status = isAscii ? 4U : 0U;
             }
 
             for (; Unsafe.IsAddressLessThan(ref source, ref sourceEnd); source = ref Unsafe.Add(ref source, 1))
             {
                 if (source < 0x80)
                 {
-                    if (++status == 0U)
+                    if (status++ == 0U)
                     {
                         Unsafe.WriteUnaligned(ref destination, (ushort)0xffff);
                         destination = ref Unsafe.AddByteOffset(ref destination, 2);
                     }
 
-                    if ((int)status < 0)
+                    if (status == 0U)
                     {
-                        status = 3U;
+                        status = 4U;
                     }
 
                     destination = unchecked((byte)(ushort)source);
@@ -126,7 +126,7 @@ public static class Utf16CompressionEncoding
                     continue;
                 }
 
-                switch (status + 1U)
+                switch (status)
                 {
                     case 0U: break;
                     case 1U:
@@ -155,12 +155,29 @@ public static class Utf16CompressionEncoding
                         destination = byte.MaxValue;
                         destination = ref Unsafe.AddByteOffset(ref destination, 1);
                     RESET_STATUS:
-                        status = uint.MaxValue;
+                        status = 0;
                         break;
                 }
 
                 Unsafe.WriteUnaligned(ref destination, source);
                 destination = ref Unsafe.AddByteOffset(ref destination, 2);
+            }
+
+            switch (status)
+            {
+                case 1:
+                    // 0xff, 0xff, _st0, dest
+                    // _st0, 0x00, dest
+                    destination = ref Unsafe.SubtractByteOffset(ref destination, 1);
+                    Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref destination, 2), (ushort)destination);
+                    break;
+                case 2:
+                    // 0xff, 0xff, _st0, _st1, dest
+                    // _st0, 0x00, _st1, 0x00, dest
+                    ref var sub2 = ref Unsafe.SubtractByteOffset(ref destination, 2);
+                    Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref sub2, 2), (ushort)sub2);
+                    Unsafe.WriteUnaligned(ref sub2, (ushort)Unsafe.SubtractByteOffset(ref destination, 1));
+                    break;
             }
 
             return Unsafe.ByteOffset(ref initialDestination, ref destination);
