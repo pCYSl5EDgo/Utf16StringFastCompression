@@ -2,6 +2,12 @@
 
 Very Fast UTF16 compression library for .NET7
 
+# Compression Ratio
+
+If all input text characters are in ASCII range then output bytes length is (text.Length + 2).
+If all input text characters are not in ASCII range then output bytes length is (text.Length << 1), which is the very same length of original text.
+The output bytes length will never be larger than that of the original.
+
 # Benchmark
 
 |        Method |                 Text |           Mean |          Error |         StdDev |
