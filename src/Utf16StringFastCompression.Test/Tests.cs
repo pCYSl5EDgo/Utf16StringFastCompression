@@ -1,4 +1,6 @@
+using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace Utf16StringFastCompression.Test;
 
@@ -17,10 +19,10 @@ public class Tests
     {
         Assert.True(value.Length >= 8);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length + 2, byteCount);
-        bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+        var byteCount = Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+        Assert.Equal(value.Length + 2, (int)byteCount);
+        bytes = bytes[..(int)byteCount];
+        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount((int)byteCount)];
         var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
         Assert.Equal(value, new string(chars[..charCount]));
     }
