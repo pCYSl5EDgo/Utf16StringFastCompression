@@ -1731,11 +1731,11 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     public void MixTest(string value)
     {
         Assert.True(value.Length >= 8);
-        Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
+        Span<byte> bytes = new byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
         var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
         Assert.InRange(byteCount, 0, value.Length << 1);
         bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+        Span<char> chars = new char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
         var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
         Assert.Equal(value, new string(chars[..charCount]));
     }
