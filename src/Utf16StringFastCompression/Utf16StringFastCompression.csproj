@@ -4,15 +4,36 @@
 		<TargetFramework>net7.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<LangVersion>11</LangVersion>
+		<Version>0.0.1</Version>
+		<Authors>pCYSl5EDgo</Authors>
+		<PackageId>Utf16StringFastCompression</PackageId>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Description>Very Fast Utf16 String Encoder</Description>
+		<Copyright>pCYSl5EDgo</Copyright>
+		<PackageProjectUrl>https://github.com/pCYSl5EDgo/Utf16StringFastCompression</PackageProjectUrl>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <WarningLevel>9999</WarningLevel>
+	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <WarningLevel>9999</WarningLevel>
+	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Using Include="System"/>
-		<Using Include="System.ComponentModel"/>
-		<Using Include="System.Numerics"/>
-		<Using Include="System.Runtime.CompilerServices"/>
-		<Using Include="System.Runtime.InteropServices"/>
-		<Using Include="System.Runtime.Intrinsics"/>
+	  <None Include="https:\raw.githubusercontent.com\pCYSl5EDgo\Utf16StringFastCompression\master\README.md" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Using Include="System" />
+		<Using Include="System.ComponentModel" />
+		<Using Include="System.Numerics" />
+		<Using Include="System.Runtime.CompilerServices" />
+		<Using Include="System.Runtime.InteropServices" />
+		<Using Include="System.Runtime.Intrinsics" />
 	</ItemGroup>
 
 </Project>
