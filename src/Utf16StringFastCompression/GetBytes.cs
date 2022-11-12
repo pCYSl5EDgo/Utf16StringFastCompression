@@ -159,12 +159,11 @@ partial class Utf16CompressionEncoding
                     case 3U:
                         // 0xff, 0xff, _st0, _st1, _st2, dest
                         // _st0, 0x00, _st1, 0x00, _st2, 0x00, dest
+                        destination = 0;
                         destination = ref Unsafe.AddByteOffset(ref destination, 1);
                         ref var sub4 = ref Unsafe.SubtractByteOffset(ref destination, 4);
                         Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref sub4, 2), (ushort)sub4);
                         Unsafe.WriteUnaligned(ref sub4, (ushort)Unsafe.AddByteOffset(ref sub4, 1));
-                        ref var sub2 = ref Unsafe.AddByteOffset(ref destination, 2);
-                        Unsafe.WriteUnaligned(ref sub2, (ushort)sub2);
                         goto RESET_STATUS;
                     default:
                         destination = byte.MaxValue;
@@ -258,12 +257,11 @@ partial class Utf16CompressionEncoding
                     case 3U:
                         // 0xff, 0xff, _st0, _st1, _st2, dest
                         // _st0, 0x00, _st1, 0x00, _st2, 0x00, dest
+                        destination = 0;
                         destination = ref Unsafe.AddByteOffset(ref destination, 1);
                         ref var sub4 = ref Unsafe.SubtractByteOffset(ref destination, 4);
                         Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref sub4, 2), (ushort)sub4);
                         Unsafe.WriteUnaligned(ref sub4, (ushort)Unsafe.AddByteOffset(ref sub4, 1));
-                        ref var sub2 = ref Unsafe.AddByteOffset(ref destination, 2);
-                        Unsafe.WriteUnaligned(ref sub2, (ushort)sub2);
                         goto RESET_STATUS;
                     default:
                         destination = byte.MaxValue;
