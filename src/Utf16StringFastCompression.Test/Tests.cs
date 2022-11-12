@@ -154,6 +154,8 @@ public class Tests
 
 ●図書カード
 """)]
+    // LICENSE NOTICE CC BY-SA 3.0
+    // Wikipedia contributors, 'The Buddha' Wikipedia, The Free Encyclopedia,12 November 2022, at 10:03 (UTC), <https://en.wikipedia.org/wiki/The_Buddha>
     [InlineData("""
 
 Page semi-protected
