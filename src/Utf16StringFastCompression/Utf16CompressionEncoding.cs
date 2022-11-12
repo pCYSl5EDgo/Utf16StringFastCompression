@@ -106,12 +106,20 @@ public static class Utf16CompressionEncoding
                 status = isAscii ? 4U : 0U;
             }
 
-            for (; Unsafe.IsAddressLessThan(ref source, ref sourceEnd); source = ref Unsafe.Add(ref source, 1))
+            while (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
             {
-                if (source < 0x80)
+                var value = (ushort)source;
+                source = ref Unsafe.Add(ref source, 1);
+                if (value < 0x80)
                 {
                     if (status++ == 0U)
                     {
+                        if (Unsafe.AreSame(ref source, ref sourceEnd))
+                        {
+                            Unsafe.WriteUnaligned(ref destination, value);
+                            break;
+                        }
+                        
                         Unsafe.WriteUnaligned(ref destination, (ushort)0xffff);
                         destination = ref Unsafe.AddByteOffset(ref destination, 2);
                     }
@@ -121,7 +129,7 @@ public static class Utf16CompressionEncoding
                         status = 4U;
                     }
 
-                    destination = unchecked((byte)(ushort)source);
+                    destination = (byte)value;
                     destination = ref Unsafe.AddByteOffset(ref destination, 1);
                     continue;
                 }
@@ -159,25 +167,17 @@ public static class Utf16CompressionEncoding
                         break;
                 }
 
-                Unsafe.WriteUnaligned(ref destination, source);
+                Unsafe.WriteUnaligned(ref destination, value);
                 destination = ref Unsafe.AddByteOffset(ref destination, 2);
             }
 
-            switch (status)
+            if (status == 2)
             {
-                case 1:
-                    // 0xff, 0xff, _st0, dest
-                    // _st0, 0x00, dest
-                    destination = ref Unsafe.SubtractByteOffset(ref destination, 1);
-                    Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref destination, 2), (ushort)destination);
-                    break;
-                case 2:
-                    // 0xff, 0xff, _st0, _st1, dest
-                    // _st0, 0x00, _st1, 0x00, dest
-                    ref var sub2 = ref Unsafe.SubtractByteOffset(ref destination, 2);
-                    Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref sub2, 2), (ushort)sub2);
-                    Unsafe.WriteUnaligned(ref sub2, (ushort)Unsafe.SubtractByteOffset(ref destination, 1));
-                    break;
+                // 0xff, 0xff, _st0, _st1, dest
+                // _st0, 0x00, _st1, 0x00, dest
+                ref var sub2 = ref Unsafe.SubtractByteOffset(ref destination, 2);
+                Unsafe.WriteUnaligned(ref Unsafe.SubtractByteOffset(ref destination, 4), (ushort)sub2);
+                Unsafe.WriteUnaligned(ref sub2, (ushort)Unsafe.SubtractByteOffset(ref destination, 1));
             }
 
             return Unsafe.ByteOffset(ref initialDestination, ref destination);
