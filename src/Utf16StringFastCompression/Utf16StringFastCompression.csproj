@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFrameworks>net7.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<LangVersion>11</LangVersion>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<Authors>pCYSl5EDgo</Authors>
 		<PackageId>Utf16StringFastCompression</PackageId>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -12,16 +12,9 @@
 		<Copyright>pCYSl5EDgo</Copyright>
 		<PackageProjectUrl>https://github.com/pCYSl5EDgo/Utf16StringFastCompression</PackageProjectUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<WarningLevel>9999</WarningLevel>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
 	</PropertyGroup>
-
-	<PropertyGroup>
-	  <WarningLevel>9999</WarningLevel>
-	  <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-	</PropertyGroup>
-
-	<ItemGroup>
-	  <None Include="https:\raw.githubusercontent.com\pCYSl5EDgo\Utf16StringFastCompression\master\README.md" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<Using Include="System" />
