@@ -4,7 +4,7 @@
 		<TargetFrameworks>net7.0</TargetFrameworks>
 		<Nullable>enable</Nullable>
 		<LangVersion>11</LangVersion>
-		<Version>0.0.2</Version>
+		<Version>0.0.3</Version>
 		<Authors>pCYSl5EDgo</Authors>
 		<PackageId>Utf16StringFastCompression</PackageId>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
