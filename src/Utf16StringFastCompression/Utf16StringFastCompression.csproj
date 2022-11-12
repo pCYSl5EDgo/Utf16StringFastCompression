@@ -1,9 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <LangVersion>11</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>11</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Using Include="System"/>
+		<Using Include="System.ComponentModel"/>
+		<Using Include="System.Numerics"/>
+		<Using Include="System.Runtime.CompilerServices"/>
+		<Using Include="System.Runtime.InteropServices"/>
+		<Using Include="System.Runtime.Intrinsics"/>
+	</ItemGroup>
 
 </Project>
