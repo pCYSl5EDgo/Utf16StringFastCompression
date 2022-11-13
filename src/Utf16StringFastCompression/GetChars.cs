@@ -92,8 +92,7 @@ partial class Utf16CompressionEncoding
                         if (Vector256.EqualsAny(vector.AsUInt16(), filter.AsUInt16()))
                         {
                             isAscii = true;
-                            var tzc = BitOperations.TrailingZeroCount(Vector256.Equals(vector.AsUInt16(), filter.AsUInt16()).ExtractMostSignificantBits());
-                            tzc <<= 1;
+                            var tzc = BitOperations.TrailingZeroCount(Vector256.Equals(vector.AsUInt16(), filter.AsUInt16()).AsByte().ExtractMostSignificantBits());
                             if (tzc != 0)
                             {
                                 Unsafe.CopyBlockUnaligned(ref Unsafe.As<char, byte>(ref destination), ref source, (uint)tzc);
@@ -145,8 +144,7 @@ partial class Utf16CompressionEncoding
                         if (Vector128.EqualsAny(vector.AsUInt16(), filter.AsUInt16()))
                         {
                             isAscii = true;
-                            var tzc = BitOperations.TrailingZeroCount(Vector128.Equals(vector.AsUInt16(), filter.AsUInt16()).ExtractMostSignificantBits());
-                            tzc <<= 1;
+                            var tzc = BitOperations.TrailingZeroCount(Vector128.Equals(vector.AsUInt16(), filter.AsUInt16()).AsByte().ExtractMostSignificantBits());
                             if (tzc != 0)
                             {
                                 Unsafe.CopyBlockUnaligned(ref Unsafe.As<char, byte>(ref destination), ref source, (uint)tzc);
