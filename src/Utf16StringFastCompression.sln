@@ -3,19 +3,18 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utf16StringFastCompression", "Utf16StringFastCompression\Utf16StringFastCompression.csproj", "{BBE99010-3FC2-4983-8887-7696F0981CBF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf16StringFastCompression", "Utf16StringFastCompression\Utf16StringFastCompression.csproj", "{BBE99010-3FC2-4983-8887-7696F0981CBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utf16StringFastCompression.Benchmark", "Utf16StringFastCompression.Benchmark\Utf16StringFastCompression.Benchmark.csproj", "{2C84800C-06D8-408B-977D-2BE99F9C9A56}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf16StringFastCompression.Benchmark", "Utf16StringFastCompression.Benchmark\Utf16StringFastCompression.Benchmark.csproj", "{2C84800C-06D8-408B-977D-2BE99F9C9A56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utf16StringFastCompression.Test", "Utf16StringFastCompression.Test\Utf16StringFastCompression.Test.csproj", "{C0863788-5C40-402C-A1B7-D0092D6DE2EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf16StringFastCompression.Test", "Utf16StringFastCompression.Test\Utf16StringFastCompression.Test.csproj", "{C0863788-5C40-402C-A1B7-D0092D6DE2EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utf16FastCompression.MemoryPack", "Utf16FastCompression.MemoryPack\Utf16FastCompression.MemoryPack.csproj", "{2DF0E659-12D2-4711-BA59-99489F2F3710}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BBE99010-3FC2-4983-8887-7696F0981CBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -30,5 +29,15 @@ Global
 		{C0863788-5C40-402C-A1B7-D0092D6DE2EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C0863788-5C40-402C-A1B7-D0092D6DE2EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C0863788-5C40-402C-A1B7-D0092D6DE2EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DF0E659-12D2-4711-BA59-99489F2F3710}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DF0E659-12D2-4711-BA59-99489F2F3710}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DF0E659-12D2-4711-BA59-99489F2F3710}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DF0E659-12D2-4711-BA59-99489F2F3710}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {14AE24FC-E5BB-4E46-8847-8D6EEC23126F}
 	EndGlobalSection
 EndGlobal
