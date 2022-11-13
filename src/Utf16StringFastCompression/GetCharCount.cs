@@ -8,9 +8,35 @@ partial class Utf16CompressionEncoding
 
     public static nint GetCharCount(scoped ref byte source, nint sourceLength)
     {
+        var state = new ToCharState();
+        return GetCharCountStateful(ref state, ref source, sourceLength);
+    }
+
+    public static nint GetCharCountStateful(scoped ref ToCharState state, scoped ref byte source, nint sourceLength)
+    {
+        if (Unsafe.IsNullRef(ref source) || sourceLength <= 0)
+        {
+            return 0;
+        }
+
         nint answer = 0;
         scoped ref var sourceEnd = ref Unsafe.AddByteOffset(ref source, sourceLength);
-        var isAscii = false;
+        var isAscii = state.IsAsciiMode;
+        if (state.HasRemainingByte)
+        {
+            state.HasRemainingByte = false;
+            var value = (ushort)((source << 8) | state.RemainingByte);
+            if (value == ushort.MaxValue)
+            {
+                isAscii = true;
+            }
+            else
+            {
+                answer += 1;
+            }
+            source = ref Unsafe.AddByteOffset(ref source, 1);
+        }
+
         if (Vector256.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector256<ushort>>())
         {
             sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
@@ -89,7 +115,7 @@ partial class Utf16CompressionEncoding
             sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<ushort>>());
         }
 
-        while (!Unsafe.AreSame(ref source, ref sourceEnd))
+        while (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
         {
             if (isAscii)
             {
@@ -102,22 +128,33 @@ partial class Utf16CompressionEncoding
                     ++answer;
                 }
                 source = ref Unsafe.AddByteOffset(ref source, 1);
+                continue;
+            }
+            
+            var value = Unsafe.ReadUnaligned<ushort>(ref source);
+            if (value == ushort.MaxValue)
+            {
+                isAscii = true;
             }
             else
             {
-                var value = Unsafe.ReadUnaligned<ushort>(ref source);
-                if (value == ushort.MaxValue)
-                {
-                    isAscii = true;
-                }
-                else
-                {
-                    ++answer;
-                }
-                source = ref Unsafe.AddByteOffset(ref source, 2);
+                ++answer;
+            }
+
+            source = ref Unsafe.AddByteOffset(ref source, 2);
+            if (Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                state.HasRemainingByte = true;
+                state.RemainingByte = source;
+                break;
+            }
+            else
+            {
+                continue;
             }
         }
 
+        state.IsAsciiMode = isAscii;
         return answer;
     }
 }
