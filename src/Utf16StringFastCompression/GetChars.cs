@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Utf16StringFastCompression;
 
 partial class Utf16CompressionEncoding
@@ -31,7 +33,7 @@ partial class Utf16CompressionEncoding
         var state = new ToCharState();
         return GetCharsStateful(ref source, sourceLength, ref destination, ref state);
     }
-    
+
     public static nint GetCharsStateful(scoped ref byte source, nint sourceLength, scoped ref char destination, scoped ref ToCharState state)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0 || Unsafe.IsNullRef(ref destination))
@@ -43,11 +45,12 @@ partial class Utf16CompressionEncoding
         {
             scoped ref var initialDestination = ref destination;
             scoped ref var sourceEnd = ref Unsafe.AddByteOffset(ref source, sourceLength);
+            ushort value;
             var isAscii = state.IsAsciiMode;
             if (state.HasRemainingByte)
             {
                 state.HasRemainingByte = false;
-                var value = (ushort)((source << 8) | state.RemainingByte);
+                value = (ushort)((source << 8) | state.RemainingByte);
                 if (value == ushort.MaxValue)
                 {
                     isAscii = true;
@@ -163,41 +166,68 @@ partial class Utf16CompressionEncoding
                 sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<ushort>>());
             }
 
-            while (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
+            if (!Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
             {
-                if (isAscii)
+                goto RETURN;
+            }
+            if (isAscii)
+            {
+                goto ASCII_LOOP;
+            }
+            if (Unsafe.ByteOffset(ref source, ref sourceEnd) == 1)
+            {
+                goto REMAINDER;
+            }
+
+        UNICODE_LOOP:
+            value = Unsafe.ReadUnaligned<ushort>(ref source);
+            source = ref Unsafe.AddByteOffset(ref source, 2);
+            if (value == ushort.MaxValue)
+            {
+                isAscii = true;
+                if (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
                 {
-                    if (source == byte.MaxValue)
-                    {
-                        isAscii = false;
-                    }
-                    else
-                    {
-                        destination = (char)(ushort)source;
-                        destination = ref Unsafe.Add(ref destination, 1);
-                    }
-                    source = ref Unsafe.AddByteOffset(ref source, 1);
-                    continue;
+                    goto ASCII_LOOP;
                 }
-                var value = Unsafe.ReadUnaligned<ushort>(ref source);
-                if (value == ushort.MaxValue)
+                goto RETURN;
+            }
+
+            destination = (char)value;
+            destination = ref Unsafe.Add(ref destination, 1);
+            switch (Unsafe.ByteOffset(ref source, ref sourceEnd))
+            {
+                case 0: goto RETURN;
+                case 1: goto REMAINDER;
+                default: goto UNICODE_LOOP;
+            }
+            
+        ASCII_LOOP:
+            value = source;
+            source = ref Unsafe.AddByteOffset(ref source, 1);
+            if (value == byte.MaxValue)
+            {
+                isAscii = false;
+                switch (Unsafe.ByteOffset(ref source, ref sourceEnd))
                 {
-                    isAscii = true;
-                }
-                else
-                {
-                    destination = (char)value;
-                    destination = ref Unsafe.Add(ref destination, 1);
-                }
-                source = ref Unsafe.AddByteOffset(ref source, 2);
-                if (Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
-                {
-                    state.HasRemainingByte = true;
-                    state.RemainingByte = source;
-                    break;
+                    case 0: goto RETURN;
+                    case 1: goto REMAINDER;
+                    default: goto UNICODE_LOOP;
                 }
             }
 
+            destination = (char)value;
+            destination = ref Unsafe.Add(ref destination, 1);
+            if (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
+            {
+                goto ASCII_LOOP;
+            }
+            goto RETURN;
+
+        REMAINDER:
+            state.HasRemainingByte = true;
+            state.RemainingByte = source;
+
+        RETURN:
             state.IsAsciiMode = isAscii;
             return Unsafe.ByteOffset(ref initialDestination, ref destination) >>> 1;
         }
