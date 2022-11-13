@@ -60,3 +60,22 @@ LaunchCount=2  UnrollFactor=1  WarmupCount=10
 | DeserializeUtf8 | very (...) text [21] |   1.811 μs |  0.3124 μs |  0.4379 μs |
 | DeserializeFast |  走れメ(...)カード [10610] |   7.075 μs |  1.2623 μs |  1.8104 μs |
 | DeserializeUtf8 |  走れメ(...)カード [10610] |  37.179 μs |  7.1154 μs | 10.2047 μs |
+
+# Format Specification
+
+## Shorter than 4 chars
+
+All inputs whose lengths are less than 4 chars are not serialized, they are just copied to the destination.
+"abc" => [0x61, 0x00, 0x62, 0xff, 0x63, 0xff]
+"あ" => [0x39, 0x30]
+
+## Longer than 3 chars
+
+This format has 2 modes, ASCII mode and non-ASCII mode. The default mode is non-ASCII mode.
+
+There are byte markers where the mode transitions occur.
+
+* From ASCII mode to non-ASCII mode: 0xff
+* From non-ASCII mode to ASCII mode: 0xff, 0xff
+
+**Note:** ASCII mode consists of more than 3 chars.
