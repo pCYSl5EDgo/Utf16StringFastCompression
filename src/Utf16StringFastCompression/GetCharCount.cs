@@ -12,6 +12,24 @@ partial class Utf16CompressionEncoding
         return GetCharCountStateful(ref source, sourceLength, ref state);
     }
 
+    public static long GetCharCount(in ReadOnlySequence<byte> source)
+    {
+        var state = new ToCharState();
+        if (source.IsSingleSegment)
+        {
+            var span = source.FirstSpan;
+            return GetCharCountStateful(ref MemoryMarshal.GetReference(span), span.Length, ref state);
+        }
+        long answer = default;
+        var enumerator = source.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            var span = enumerator.Current.Span;
+            answer += GetCharCountStateful(ref MemoryMarshal.GetReference(span), span.Length, ref state);
+        }
+        return answer;
+    }
+
     public static nint GetCharCountStateful(scoped ref byte source, nint sourceLength, scoped ref ToCharState state)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0)

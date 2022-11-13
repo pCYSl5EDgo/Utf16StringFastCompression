@@ -34,6 +34,26 @@ partial class Utf16CompressionEncoding
         return GetCharsStateful(ref source, sourceLength, ref destination, ref state);
     }
 
+    public static long GetChars(in ReadOnlySequence<byte> source, scoped ref char destination)
+    {
+        var state = new ToCharState();
+        if (source.IsSingleSegment)
+        {
+            var span = source.FirstSpan;
+            return GetCharsStateful(ref MemoryMarshal.GetReference(span), span.Length, ref destination, ref state);
+        }
+        long answer = default;
+        var enumerator = source.GetEnumerator();
+        while (enumerator.MoveNext())
+        {
+            var span = enumerator.Current.Span;
+            var count = GetCharsStateful(ref MemoryMarshal.GetReference(span), span.Length, ref destination, ref state);
+            destination = ref Unsafe.Add(ref destination, count);
+            answer += count;
+        }
+        return answer;
+    }
+
     public static nint GetCharsStateful(scoped ref byte source, nint sourceLength, scoped ref char destination, scoped ref ToCharState state)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0 || Unsafe.IsNullRef(ref destination))

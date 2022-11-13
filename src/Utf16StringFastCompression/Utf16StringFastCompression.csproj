@@ -18,6 +18,7 @@
 
 	<ItemGroup>
 		<Using Include="System" />
+		<Using Include="System.Buffers" />
 		<Using Include="System.ComponentModel" />
 		<Using Include="System.Numerics" />
 		<Using Include="System.Runtime.CompilerServices" />
