@@ -2,6 +2,10 @@
 
 partial class Utf16CompressionEncoding
 {
+    public static int GetCharCount(ReadOnlySpan<byte> source) => GetCharCount(ref MemoryMarshal.GetReference(source), source.Length).ToInt32();
+
+    public static int GetCharCount(byte[] source, int sourceLength) => GetCharCount(ref MemoryMarshal.GetArrayDataReference(source), sourceLength).ToInt32();
+
     public static nint GetCharCount(scoped ref byte source, nint sourceLength)
     {
         nint answer = 0;

@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using Utf16StringFastCompression;
 using BenchmarkDotNet.Attributes;
 
-[ShortRunJob]
+[MediumRunJob]
 public class SerializeTest
 {
     [Params(
@@ -1711,7 +1711,7 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     }
 }
 
-[ShortRunJob]
+[MediumRunJob]
 public class DeserializeTest
 {
     [Params(

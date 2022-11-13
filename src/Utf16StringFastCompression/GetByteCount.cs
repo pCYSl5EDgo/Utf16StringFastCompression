@@ -2,6 +2,10 @@
 
 partial class Utf16CompressionEncoding
 {
+    public static int GetByteCount(ReadOnlySpan<char> source) => GetByteCount(ref MemoryMarshal.GetReference(source), source.Length).ToInt32();
+
+    public static int GetByteCount(char[] source, int sourceLength) => GetByteCount(ref MemoryMarshal.GetArrayDataReference(source), sourceLength).ToInt32();
+
     public static nint GetByteCount(scoped ref char source, nint sourceLength)
     {
         if (sourceLength < 4)
@@ -12,26 +16,16 @@ partial class Utf16CompressionEncoding
         nint answer = 0;
         scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
         var status = 0U;
-        if (Vector256.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector256<byte>>())
+        if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector256<byte>>() << 1))
         {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
             var isAscii = status != 0U;
             var filter = Vector256.Create<ushort>(0xff80);
-            while (sourceLength >>> 5 != 0)
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
             {
                 var v0 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-                var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source), (uint)Unsafe.SizeOf<Vector256<byte>>() >>> 1);
-                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>() << 1);
-                sourceLength -= Unsafe.SizeOf<Vector256<byte>>();
-                if (Vector256.EqualsAll((v0 | v1) & filter, Vector256<ushort>.Zero))
-                {
-                    if (!isAscii)
-                    {
-                        isAscii = true;
-                        answer += 2;
-                    }
-                    answer += Unsafe.SizeOf<Vector256<byte>>();
-                }
-                else
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                if ((v0 & filter) != Vector256<ushort>.Zero)
                 {
                     if (isAscii)
                     {
@@ -39,31 +33,33 @@ partial class Utf16CompressionEncoding
                         answer += 1;
                     }
 
-                    answer += Unsafe.SizeOf<Vector256<byte>>() << 1;
+                    answer += Unsafe.SizeOf<Vector256<byte>>();
+                    continue;
                 }
+
+                if (!isAscii)
+                {
+                    answer += 2;
+                }
+
+                var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                isAscii = (v1 & filter) == Vector256<ushort>.Zero;
+                answer += (!isAscii ? (Unsafe.SizeOf<Vector256<byte>>() >> 1) + 1 : 0) + Unsafe.SizeOf<Vector256<byte>>();
             }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
             status = isAscii ? 4U : 0U;
         }
-        if (Vector128.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector128<byte>>())
+        if (Vector128.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector128<byte>>() << 1))
         {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
             var isAscii = status != 0U;
             var filter = Vector128.Create<ushort>(0xff80);
-            while (sourceLength >>> 4 != 0)
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
             {
                 var v0 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-                var v1 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source), (uint)Unsafe.SizeOf<Vector128<byte>>() >>> 1);
-                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>() << 1);
-                sourceLength -= Unsafe.SizeOf<Vector128<byte>>();
-                if (Vector128.EqualsAll((v0 | v1) & filter, Vector128<ushort>.Zero))
-                {
-                    if (!isAscii)
-                    {
-                        isAscii = true;
-                        answer += 2;
-                    }
-                    answer += Unsafe.SizeOf<Vector128<byte>>();
-                }
-                else
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                if ((v0 & filter) != Vector128<ushort>.Zero)
                 {
                     if (isAscii)
                     {
@@ -71,9 +67,21 @@ partial class Utf16CompressionEncoding
                         answer += 1;
                     }
 
-                    answer += Unsafe.SizeOf<Vector128<byte>>() << 1;
+                    answer += Unsafe.SizeOf<Vector128<byte>>();
+                    continue;
                 }
+
+                if (!isAscii)
+                {
+                    answer += 2;
+                }
+
+                var v1 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                isAscii = (v1 & filter) == Vector128<ushort>.Zero;
+                answer += (!isAscii ? (Unsafe.SizeOf<Vector128<byte>>() >> 1) + 1 : 0) + Unsafe.SizeOf<Vector128<byte>>();
             }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
             status = isAscii ? 4U : 0U;
         }
 
