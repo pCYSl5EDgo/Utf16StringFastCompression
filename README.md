@@ -5,8 +5,10 @@ Very Fast UTF16 compression library for .NET7
 # Usage
 
 ```
-dotnet add package 
+dotnet add package Utf16StringFastCompression
 ```
+
+All API is under Utf16StringFastCompression.Utf16CompressionEncoding static class.
 
 # Compression Ratio
 
@@ -50,16 +52,16 @@ Intel Core i7-8750H CPU 2.20GHz (Coffee Lake), 1 CPU, 12 logical and 6 physical 
 Job=MediumRun  InvocationCount=1  IterationCount=15  
 LaunchCount=2  UnrollFactor=1  WarmupCount=10  
 
-|          Method |                 Text |       Mean |      Error |     StdDev |
-|---------------- |--------------------- |-----------:|-----------:|-----------:|
-| DeserializeFast |                      |   1.693 μs |  0.4474 μs |  0.6417 μs |
-| DeserializeUtf8 |                      |   1.928 μs |  0.5460 μs |  0.7289 μs |
-| DeserializeFast | P(...)iki [174742] | 137.342 μs | 14.2179 μs | 21.2806 μs |
-| DeserializeUtf8 | P(...)iki [174742] | 151.607 μs | 14.3747 μs | 21.5154 μs |
-| DeserializeFast | very (...) text [21] |   2.557 μs |  0.7679 μs |  1.1494 μs |
-| DeserializeUtf8 | very (...) text [21] |   1.811 μs |  0.3124 μs |  0.4379 μs |
-| DeserializeFast |  走れメ(...)カード [10610] |   7.075 μs |  1.2623 μs |  1.8104 μs |
-| DeserializeUtf8 |  走れメ(...)カード [10610] |  37.179 μs |  7.1154 μs | 10.2047 μs |
+|          Method |                 Text |       Mean |      Error |     StdDev |     Median |
+|---------------- |--------------------- |-----------:|-----------:|-----------:|-----------:|
+| DeserializeFast |                      |   1.114 μs |  0.0821 μs |  0.1177 μs |   1.100 μs |
+| DeserializeUtf8 |                      |   2.593 μs |  0.8732 μs |  1.3070 μs |   1.750 μs |
+| DeserializeFast | P(...)iki [174742] | 155.986 μs | 18.8278 μs | 27.5975 μs | 157.600 μs |
+| DeserializeUtf8 | P(...)iki [174742] | 157.247 μs | 17.2575 μs | 25.8301 μs | 158.200 μs |
+| DeserializeFast | very (...) text [21] |   2.743 μs |  0.9677 μs |  1.3879 μs |   2.750 μs |
+| DeserializeUtf8 | very (...) text [21] |   3.524 μs |  1.0384 μs |  1.5221 μs |   3.500 μs |
+| DeserializeFast |  走れメ(...)カード [10610] |   6.092 μs |  0.3951 μs |  0.5275 μs |   5.900 μs |
+| DeserializeUtf8 |  走れメ(...)カード [10610] |  33.415 μs |  0.5359 μs |  0.7513 μs |  33.300 μs |
 
 # Format Specification
 
