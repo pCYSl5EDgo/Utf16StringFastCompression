@@ -9,10 +9,10 @@ partial class Utf16CompressionEncoding
     public static nint GetCharCount(scoped ref byte source, nint sourceLength)
     {
         var state = new ToCharState();
-        return GetCharCountStateful(ref state, ref source, sourceLength);
+        return GetCharCountStateful(ref source, sourceLength, ref state);
     }
 
-    public static nint GetCharCountStateful(scoped ref ToCharState state, scoped ref byte source, nint sourceLength)
+    public static nint GetCharCountStateful(scoped ref byte source, nint sourceLength, scoped ref ToCharState state)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0)
         {
@@ -147,10 +147,6 @@ partial class Utf16CompressionEncoding
                 state.HasRemainingByte = true;
                 state.RemainingByte = source;
                 break;
-            }
-            else
-            {
-                continue;
             }
         }
 

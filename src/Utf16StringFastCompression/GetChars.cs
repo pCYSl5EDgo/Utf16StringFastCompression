@@ -28,11 +28,37 @@ partial class Utf16CompressionEncoding
     /// <returns>The number of decoded chars.</returns>
     public static nint GetChars(scoped ref byte source, nint sourceLength, scoped ref char destination)
     {
+        var state = new ToCharState();
+        return GetCharsStateful(ref source, sourceLength, ref destination, ref state);
+    }
+    
+    public static nint GetCharsStateful(scoped ref byte source, nint sourceLength, scoped ref char destination, scoped ref ToCharState state)
+    {
+        if (Unsafe.IsNullRef(ref source) || sourceLength <= 0 || Unsafe.IsNullRef(ref destination))
+        {
+            return 0;
+        }
+
         unchecked
         {
             scoped ref var initialDestination = ref destination;
             scoped ref var sourceEnd = ref Unsafe.AddByteOffset(ref source, sourceLength);
-            var isAscii = false;
+            var isAscii = state.IsAsciiMode;
+            if (state.HasRemainingByte)
+            {
+                state.HasRemainingByte = false;
+                var value = (ushort)((source << 8) | state.RemainingByte);
+                if (value == ushort.MaxValue)
+                {
+                    isAscii = true;
+                }
+                else
+                {
+                    destination = (char)value;
+                    destination = ref Unsafe.Add(ref destination, 1);
+                }
+                source = ref Unsafe.AddByteOffset(ref source, 1);
+            }
             if (Vector256.IsHardwareAccelerated && sourceLength >= Unsafe.SizeOf<Vector256<ushort>>())
             {
                 sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
@@ -139,7 +165,7 @@ partial class Utf16CompressionEncoding
                 sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<ushort>>());
             }
 
-            while (!Unsafe.AreSame(ref source, ref sourceEnd))
+            while (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
             {
                 if (isAscii)
                 {
@@ -153,23 +179,28 @@ partial class Utf16CompressionEncoding
                         destination = ref Unsafe.Add(ref destination, 1);
                     }
                     source = ref Unsafe.AddByteOffset(ref source, 1);
+                    continue;
+                }
+                var value = Unsafe.ReadUnaligned<ushort>(ref source);
+                if (value == ushort.MaxValue)
+                {
+                    isAscii = true;
                 }
                 else
                 {
-                    var value = Unsafe.ReadUnaligned<ushort>(ref source);
-                    if (value == ushort.MaxValue)
-                    {
-                        isAscii = true;
-                    }
-                    else
-                    {
-                        destination = (char)value;
-                        destination = ref Unsafe.Add(ref destination, 1);
-                    }
-                    source = ref Unsafe.AddByteOffset(ref source, 2);
+                    destination = (char)value;
+                    destination = ref Unsafe.Add(ref destination, 1);
+                }
+                source = ref Unsafe.AddByteOffset(ref source, 2);
+                if (Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+                {
+                    state.HasRemainingByte = true;
+                    state.RemainingByte = source;
+                    break;
                 }
             }
 
+            state.IsAsciiMode = isAscii;
             return Unsafe.ByteOffset(ref initialDestination, ref destination) >>> 1;
         }
     }
