@@ -7,6 +7,62 @@ using Utf16StringFastCompression;
 using BenchmarkDotNet.Attributes;
 
 [MediumRunJob]
+public class PextTest
+{
+    private uint[] array = new uint[4096];
+    [IterationSetup]
+    public void Setup()
+    {
+        System.Random.Shared.NextBytes(MemoryMarshal.Cast<uint, byte>(array.AsSpan()));
+    }
+
+    [Benchmark]
+    public uint PextLoop()
+    {
+        uint answer = 0;
+        for (nint i = 0; i < array.Length; ++i) answer += Pext(array[i]);
+        return answer;
+    }
+    [Benchmark]
+    public uint NarrowLoop()
+    {
+        uint answer = 0;
+        for (nint i = 0; i < array.Length; ++i) answer += Narrow(array[i]);
+        return answer;
+    }
+
+    public static uint Pext(uint value)
+    {
+        if (System.Runtime.Intrinsics.X86.Bmi2.IsSupported)
+        {
+            return System.Runtime.Intrinsics.X86.Bmi2.ParallelBitExtract(value, 0x55555555U);
+        }
+        return 0;
+    }
+
+    public static uint Narrow(uint value)
+    {
+        return
+        (value & 0x0000_0001U)
+        | ((value & 0x0000_0004U) >>> 1)
+        | ((value & 0x0000_0010U) >>> 2)
+        | ((value & 0x0000_0040U) >>> 3)
+        | ((value & 0x0000_0100U) >>> 4)
+        | ((value & 0x0000_0400U) >>> 5)
+        | ((value & 0x0000_1000U) >>> 6)
+        | ((value & 0x0000_4000U) >>> 7)
+        | ((value & 0x0001_0000U) >>> 8)
+        | ((value & 0x0004_0000U) >>> 9)
+        | ((value & 0x0010_0000U) >>> 10)
+        | ((value & 0x0040_0000U) >>> 11)
+        | ((value & 0x0100_0000U) >>> 12)
+        | ((value & 0x0400_0000U) >>> 13)
+        | ((value & 0x1000_0000U) >>> 14)
+        | ((value & 0x4000_0000U) >>> 15);
+    }
+}
+
+[MediumRunJob]
 public class SerializeTest
 {
     [Params(
