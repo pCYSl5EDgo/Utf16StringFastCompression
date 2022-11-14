@@ -4,6 +4,8 @@ partial class Utf16CompressionEncoding
 {
     public static int GetByteCount(ReadOnlySpan<char> source) => GetByteCount(ref MemoryMarshal.GetReference(source), source.Length).ToInt32();
 
+    public static int GetByteCountDeterministic(ReadOnlySpan<char> source) => GetByteCountDeterministic(ref MemoryMarshal.GetReference(source), source.Length).ToInt32();
+
     public static int GetByteCount(char[] source, int sourceLength) => GetByteCount(ref MemoryMarshal.GetArrayDataReference(source), sourceLength).ToInt32();
 
     public static nint GetByteCount(scoped ref char source, nint sourceLength)

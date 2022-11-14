@@ -10,6 +10,8 @@ partial class Utf16CompressionEncoding
     /// <returns>The number of encoded bytes.</returns>
     public static int GetBytes(ReadOnlySpan<char> source, Span<byte> destination) => GetBytes(ref MemoryMarshal.GetReference(source), source.Length, ref MemoryMarshal.GetReference(destination)).ToInt32();
 
+    public static int GetBytesDeterministic(ReadOnlySpan<char> source, Span<byte> destination) => GetBytesDeterministic(ref MemoryMarshal.GetReference(source), source.Length, ref MemoryMarshal.GetReference(destination)).ToInt32();
+
     public static int GetBytes(char[] source, int sourceLength, byte[] destination) => GetBytes(ref MemoryMarshal.GetArrayDataReference(source), sourceLength, ref MemoryMarshal.GetArrayDataReference(destination)).ToInt32();
 
     /// <summary>

@@ -19,14 +19,23 @@ public class Tests
     {
         Assert.True(value.Length >= 8);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length + 2, (int)byteCount);
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        bytes = bytes[..(int)byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount((int)byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length + 2, (int)byteCount);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            bytes = bytes[..(int)byteCount];
+            Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount((int)byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length + 2, (int)byteCount);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            bytes = bytes[..(int)byteCount];
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 
     [Theory]
@@ -37,14 +46,23 @@ public class Tests
     {
         Assert.True(value.Length >= 8);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length << 1, byteCount);
-        bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length << 1, byteCount);
+            bytes = bytes[..byteCount];
+            Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = (int)Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length << 1, byteCount);
+            bytes = bytes[..byteCount];
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 
     [Theory]
@@ -1741,14 +1759,23 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     {
         Assert.True(value.Length >= 8);
         Span<byte> bytes = new byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.InRange(byteCount, 0, value.Length << 1);
-        bytes = bytes[..(int)byteCount];
-        Span<char> chars = new char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.InRange(byteCount, 0, value.Length << 1);
+            bytes = bytes[..(int)byteCount];
+            Span<char> chars = new char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
+            Assert.InRange(byteCount, 0, value.Length << 1);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(value.AsSpan()));
+            bytes = bytes[..byteCount];
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 
     [Theory]
@@ -1760,14 +1787,23 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     {
         Assert.InRange(value.Length, 0, 8);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length + 2, byteCount);
-        bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length + 2, byteCount);
+            bytes = bytes[..byteCount];
+            Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
+            Assert.Equal(value.Length + 2, byteCount);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(value.AsSpan()));
+            bytes = bytes[..byteCount];
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 
     [Theory]
@@ -1779,14 +1815,23 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     {
         Assert.True(value.Length < 8);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length << 1, byteCount);
-        bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length << 1, byteCount);
+            bytes = bytes[..byteCount];
+            Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
+            Assert.Equal(value.Length << 1, byteCount);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            bytes = bytes[..byteCount];
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 
     [Theory]
@@ -1801,13 +1846,22 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     {
         Assert.True(value.Length < 4);
         Span<byte> bytes = stackalloc byte[Utf16CompressionEncoding.GetMaxByteCount(value.Length)];
-        var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-        Assert.Equal(value.Length << 1, byteCount);
-        bytes = bytes[..byteCount];
-        Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
-        var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
-        Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-        Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
-        Assert.Equal(value, new string(chars[..charCount]));
+        {
+            var byteCount = (int)Utf16CompressionEncoding.GetBytes(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
+            Assert.Equal(value.Length << 1, byteCount);
+            bytes = bytes[..byteCount];
+            Span<char> chars = stackalloc char[Utf16CompressionEncoding.GetMaxCharCount(byteCount)];
+            var charCount = (int)Utf16CompressionEncoding.GetChars(ref MemoryMarshal.GetReference(bytes), byteCount, ref MemoryMarshal.GetReference(chars));
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
+            Assert.Equal(value, new string(chars[..charCount]));
+        }
+        {
+            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
+            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
+            Assert.Equal(value.Length << 1, byteCount);
+            bytes = bytes[..byteCount];
+            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
+        }
     }
 }
