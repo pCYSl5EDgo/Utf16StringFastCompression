@@ -202,8 +202,7 @@ partial class Utf16CompressionEncoding
                 if ((bits & 1U) == 0U)
                 {
                     destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
-                    var shift = (bits >>> 2) & bits;
-                    shift &= shift >>> 4;
+                    var shift = bits & (bits >>> 2) & (bits >>> 4) & (bits >>> 6);
                     if (shift == 0U)
                     {
                         destination = ref Write(ref destination, ref vec);
@@ -266,8 +265,7 @@ partial class Utf16CompressionEncoding
                 if ((bits & 1U) == 0U)
                 {
                     destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
-                    var shift = (bits >>> 2) & bits;
-                    shift &= shift >>> 4;
+                    var shift = bits & (bits >>> 2) & (bits >>> 4) & (bits >>> 6);
                     if (shift == 0U)
                     {
                         destination = ref Write(ref destination, ref vec);
