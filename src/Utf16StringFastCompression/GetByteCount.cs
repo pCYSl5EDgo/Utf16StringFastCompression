@@ -85,47 +85,23 @@ partial class Utf16CompressionEncoding
             status = isAscii ? 4U : 0U;
         }
 
-        while (Unsafe.IsAddressLessThan(ref source, ref sourceEnd))
+        while (!Unsafe.AreSame(ref source, ref sourceEnd))
         {
             var value = (ushort)source;
             source = ref Unsafe.Add(ref source, 1);
-            if (value < 0x80)
+            if (value >= 0x80)
             {
-                if (status++ == 0U)
-                {
-                    if (Unsafe.AreSame(ref source, ref sourceEnd))
-                    {
-                        break;
-                    }
-
-                    answer += 2;
-                }
-
-                if (status == 0U)
-                {
-                    status = 4U;
-                }
-
-                answer += 1;
+                answer += (status >= 4 ? 1 : 0) + 2;
+                status = 0;
                 continue;
             }
-
-            switch (status)
+            if (++status < 4)
             {
-                case 0U: break;
-                case 1U:
-                    answer -= 1;
-                    goto RESET_STATUS;
-                case 2U:
-                    goto RESET_STATUS;
-                default:
-                    answer += 1;
-                RESET_STATUS:
-                    status = 0;
-                    break;
+                answer += 2;
+                continue;
             }
-
-            answer += 2;
+            answer += status != 4 ? 1 : 0;
+            status = 4;
         }
 
         return answer;
