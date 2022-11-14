@@ -1,3 +1,8 @@
+__**This branch is for only research purpose**__
+
+This has very bad performance issue!
+Do not reinvent this!
+
 # Utf16StringFastCompression
 
 Very Fast UTF16 compression library for .NET7
@@ -17,6 +22,19 @@ If all input text characters are not in ASCII range then output bytes length is 
 The output bytes length will never be larger than that of the original.
 
 # Benchmark
+
+## Bad Performance Benchmark
+
+|        Method |                 Text |           Mean |         Error |        StdDev |         Median |
+|-------------- |--------------------- |---------------:|--------------:|--------------:|---------------:|
+| SerializeFast |                      |       7.077 ns |     0.7572 ns |     1.0615 ns |       6.349 ns |
+| SerializeUtf8 |                      |      13.561 ns |     0.3122 ns |     0.4673 ns |      13.464 ns |
+| SerializeFast | P(...)iki [174742] | 315,645.705 ns | 1,749.0192 ns | 2,563.6896 ns | 315,768.457 ns |
+| SerializeUtf8 | P(...)iki [174742] | 139,469.206 ns | 5,987.4391 ns | 8,587.0062 ns | 135,211.658 ns |
+| SerializeFast | very (...) text [21] |      37.408 ns |     2.3530 ns |     3.2985 ns |      35.477 ns |
+| SerializeUtf8 | very (...) text [21] |      19.367 ns |     0.2127 ns |     0.3118 ns |      19.287 ns |
+| SerializeFast |  走れメ(...)カード [10610] |  18,089.731 ns |   373.1349 ns |   546.9362 ns |  17,790.106 ns |
+| SerializeUtf8 |  走れメ(...)カード [10610] |  22,065.688 ns |   684.5503 ns | 1,003.4049 ns |  21,629.352 ns |
 
 ## Serialize Performance char → byte
 
