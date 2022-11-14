@@ -1796,14 +1796,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     }
 
     [Benchmark]
-    public int SerializeDeterministic()
-    {
-        var array = new byte[Utf16CompressionEncoding.GetMaxByteCount(Text.Length)];
-        var length = Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length, ref MemoryMarshal.GetArrayDataReference(array));
-        return (int)length;
-    }
-
-    [Benchmark]
     public int SerializeUtf8()
     {
         var array = new byte[Encoding.UTF8.GetMaxByteCount(Text.Length)];
@@ -1815,13 +1807,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     public int ByteCountFast()
     {
         var length = Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length);
-        return (int)length;
-    }
-
-    [Benchmark]
-    public int ByteCountDeterministic()
-    {
-        var length = Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length);
         return (int)length;
     }
 

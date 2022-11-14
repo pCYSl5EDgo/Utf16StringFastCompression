@@ -29,13 +29,6 @@ public class Tests
             Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
             Assert.Equal(value, new string(chars[..charCount]));
         }
-        {
-            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-            Assert.Equal(value.Length + 2, (int)byteCount);
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-            bytes = bytes[..(int)byteCount];
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
-        }
     }
 
     [Theory]
@@ -55,13 +48,6 @@ public class Tests
             Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
             Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
             Assert.Equal(value, new string(chars[..charCount]));
-        }
-        {
-            var byteCount = (int)Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length, ref MemoryMarshal.GetReference(bytes));
-            Assert.Equal(value.Length << 1, byteCount);
-            bytes = bytes[..byteCount];
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
         }
     }
 
@@ -1769,13 +1755,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
             Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
             Assert.Equal(value, new string(chars[..charCount]));
         }
-        {
-            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
-            Assert.InRange(byteCount, 0, value.Length << 1);
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(value.AsSpan()));
-            bytes = bytes[..byteCount];
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
-        }
     }
 
     [Theory]
@@ -1797,13 +1776,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
             Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
             Assert.Equal(value, new string(chars[..charCount]));
         }
-        {
-            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
-            Assert.Equal(value.Length + 2, byteCount);
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(value.AsSpan()));
-            bytes = bytes[..byteCount];
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
-        }
     }
 
     [Theory]
@@ -1824,13 +1796,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
             Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
             Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
             Assert.Equal(value, new string(chars[..charCount]));
-        }
-        {
-            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
-            Assert.Equal(value.Length << 1, byteCount);
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-            bytes = bytes[..byteCount];
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
         }
     }
 
@@ -1855,13 +1820,6 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
             Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
             Assert.Equal(Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(bytes), byteCount), charCount);
             Assert.Equal(value, new string(chars[..charCount]));
-        }
-        {
-            var byteCount = Utf16CompressionEncoding.GetBytesDeterministic(value.AsSpan(), bytes);
-            Assert.Equal(byteCount, Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(value.AsSpan()), value.Length));
-            Assert.Equal(value.Length << 1, byteCount);
-            bytes = bytes[..byteCount];
-            Assert.Equal(value, Utf16CompressionEncoding.GetString(bytes));
         }
     }
 }
