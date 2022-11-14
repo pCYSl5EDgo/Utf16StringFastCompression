@@ -3,8 +3,49 @@ using System.Text;
 using System.Text.Unicode;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using Utf16StringFastCompression;
 using BenchmarkDotNet.Attributes;
+
+[MediumRunJob]
+public class ContinuousTest
+{
+    private uint[] array = new uint[4096];
+    [IterationSetup]
+    public void Setup()
+    {
+        System.Random.Shared.NextBytes(MemoryMarshal.Cast<uint, byte>(array.AsSpan()));
+    }
+
+    [Benchmark]
+    public uint Continuous4_2stepLoop()
+    {
+        uint answer = 0; for (nint i = 0; i < array.Length; ++i) answer += Continuous4_2step(array[i]); return answer;
+    }
+    [Benchmark]
+    public uint Continuous4_4stepLoop()
+    {
+        uint answer = 0; for (nint i = 0; i < array.Length; ++i) answer += Continuous4_4step(array[i]); return answer;
+    }
+    [Benchmark]
+    public uint Continuous4_Pext_2stepLoop()
+    {
+        uint answer = 0; for (nint i = 0; i < array.Length; ++i) answer += Continuous4_Pext_2step(array[i]); return answer;
+    }
+    public static uint Continuous4_Pext_2step(uint bits)
+    {
+        if (!Bmi2.IsSupported) { return 0; }
+        bits = Bmi2.ParallelBitExtract(bits, 0x55555555U);
+        bits |= bits >>> 2;
+        return bits | (bits >>> 4);
+    }
+    public static uint Continuous4_4step(uint bits) => bits | (bits >>> 2) | (bits >>> 4) | (bits >>> 6);
+    public static uint Continuous4_2step(uint bits)
+    {
+        bits |= (bits >>> 2);
+        return bits | (bits >>> 4);
+    }
+}
 
 [MediumRunJob]
 public class PextTest
@@ -19,23 +60,19 @@ public class PextTest
     [Benchmark]
     public uint PextLoop()
     {
-        uint answer = 0;
-        for (nint i = 0; i < array.Length; ++i) answer += Pext(array[i]);
-        return answer;
+        uint answer = 0; for (nint i = 0; i < array.Length; ++i) answer += Pext(array[i]); return answer;
     }
     [Benchmark]
     public uint NarrowLoop()
     {
-        uint answer = 0;
-        for (nint i = 0; i < array.Length; ++i) answer += Narrow(array[i]);
-        return answer;
+        uint answer = 0; for (nint i = 0; i < array.Length; ++i) answer += Narrow(array[i]); return answer;
     }
 
     public static uint Pext(uint value)
     {
-        if (System.Runtime.Intrinsics.X86.Bmi2.IsSupported)
+        if (Bmi2.IsSupported)
         {
-            return System.Runtime.Intrinsics.X86.Bmi2.ParallelBitExtract(value, 0x55555555U);
+            return Bmi2.ParallelBitExtract(value, 0x55555555U);
         }
         return 0;
     }
