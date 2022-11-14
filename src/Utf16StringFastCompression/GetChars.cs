@@ -6,26 +6,17 @@ partial class Utf16CompressionEncoding
 {
     public static string GetString(ReadOnlySpan<byte> source) => GetString(ref MemoryMarshal.GetReference(source), source.Length);
 
-    public static unsafe string GetString(ref byte source, int sourceLength)
+    public static unsafe string GetString(ref byte source, nint sourceLength)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0)
         {
             return string.Empty;
         }
-        if (sourceLength <= 64)
-        {
-            Span<char> span = stackalloc char[sourceLength];
-            var length = GetChars(ref source, sourceLength, ref MemoryMarshal.GetReference(span));
-            return new string(span[..(int)length]);
-        }
-        else
-        {
-            var length = GetCharCount(ref source, sourceLength);
-            return string.Create((int)length, ((IntPtr)Unsafe.AsPointer(ref source), sourceLength), CreateString);
-        }
+        var length = GetCharCount(ref source, sourceLength);
+        return string.Create((int)length, ((IntPtr)Unsafe.AsPointer(ref source), sourceLength), CreateString);
     }
 
-    private static unsafe void CreateString(Span<char> span, ValueTuple<IntPtr, int> arg)
+    private static unsafe void CreateString(Span<char> span, ValueTuple<IntPtr, IntPtr> arg)
     {
         GetChars(ref *((byte*)(void*)arg.Item1), arg.Item2, ref MemoryMarshal.GetReference(span));
     }
