@@ -18,6 +18,19 @@ The output bytes length will never be larger than that of the original.
 
 # Benchmark
 
+## Test Performance
+
+|        Method |                 Text |           Mean |       Error |      StdDev |
+|-------------- |--------------------- |---------------:|------------:|------------:|
+| SerializeFast |                      |       6.931 ns |   0.3587 ns |   0.5028 ns |
+| SerializeUtf8 |                      |      13.537 ns |   0.1629 ns |   0.2336 ns |
+| SerializeFast | P(...)iki [174742] | 135,535.024 ns | 667.9756 ns | 999.7944 ns |
+| SerializeUtf8 | P(...)iki [174742] | 133,616.812 ns | 290.6577 ns | 407.4616 ns |
+| SerializeFast | very (...) text [21] |      17.774 ns |   0.0905 ns |   0.1327 ns |
+| SerializeUtf8 | very (...) text [21] |      19.029 ns |   0.0597 ns |   0.0893 ns |
+| SerializeFast |  走れメ(...)カード [10610] |   2,578.488 ns |  23.1393 ns |  34.6338 ns |
+| SerializeUtf8 |  走れメ(...)カード [10610] |  21,590.087 ns |  68.9319 ns | 101.0395 ns |
+
 ## Serialize Performance char → byte
 
 BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19044.2251/21H2/November2021Update)

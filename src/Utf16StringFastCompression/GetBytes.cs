@@ -240,6 +240,70 @@ partial class Utf16CompressionEncoding
             }
             sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>());
         }
+        if (Vector128.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= Unsafe.SizeOf<Vector128<byte>>())
+        {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>());
+            var filter = Vector128.Create((ushort)0xff80);
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                var vec = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                // 00 → unicode, 11 → ascii
+                var bits = Vector128.Equals(vec & filter, Vector128<ushort>.Zero).AsByte().ExtractMostSignificantBits();
+                if (bits == 0U)
+                {
+                    destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
+                    destination = ref Write(ref destination, ref vec);
+                    source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                    continue;
+                }
+                if (bits == ushort.MaxValue)
+                {
+                    destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
+                    destination = ref Write(ref destination, Vector128.Narrow(vec, vec).AsUInt64().GetElement(0));
+                    source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                    continue;
+                }
+                if ((bits & 1U) == 0U)
+                {
+                    destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
+                    var shift = (bits >>> 2) & bits;
+                    shift &= shift >>> 4;
+                    if (shift == 0U)
+                    {
+                        destination = ref Write(ref destination, ref vec);
+                        source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                        status = (uint)(BitOperations.LeadingZeroCount((ushort)~bits) >>> 1) - 8U;
+                        continue;
+                    }
+
+                    var copySize = BitOperations.TrailingZeroCount(shift);
+                    destination = ref Copy(ref destination, ref vec, (uint)copySize);
+                    source = ref Unsafe.AddByteOffset(ref source, copySize);
+                    destination = ref Write(ref destination, ushort.MaxValue);
+                    status = 4;
+                    continue;
+                }
+
+                var asciiLength = BitOperations.TrailingZeroCount(~bits) >>> 1;
+                if (asciiLength + status < 4)
+                {
+                    status = 0;
+                    var copySize = (uint)(asciiLength + 1) << 1;
+                    destination = ref Copy(ref destination, ref vec, copySize);
+                    source = ref Unsafe.AddByteOffset(ref source, copySize);
+                }
+                else
+                {
+                    destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
+                    var narrow = Vector128.Narrow(vec, vec);
+                    destination = ref Copy(ref destination, ref narrow, (uint)asciiLength);
+                    destination = ref Write(ref destination, byte.MaxValue);
+                    source = ref Unsafe.Add(ref source, asciiLength);
+                    status = 0;
+                }
+            }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>());
+        }
 
         while (!Unsafe.AreSame(ref source, ref sourceEnd))
         {
@@ -280,6 +344,12 @@ partial class Utf16CompressionEncoding
     {
         Unsafe.WriteUnaligned(ref destination, value);
         return ref Unsafe.AddByteOffset(ref destination, 2);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ref byte Write(ref byte destination, ulong value)
+    {
+        Unsafe.WriteUnaligned(ref destination, value);
+        return ref Unsafe.AddByteOffset(ref destination, 8);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static ref byte Write(ref byte destination, scoped ref Vector256<ushort> value)
