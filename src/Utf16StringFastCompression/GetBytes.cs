@@ -219,84 +219,136 @@ partial class Utf16CompressionEncoding
         scoped ref byte initialDestination = ref destination;
         scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
         var status = 0U;
-        // if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) <= Unsafe.SizeOf<Vector256<ushort>>())
-        // {
-        //     sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
-        //     Vector256<byte> narrow;
-        //     var filter = Vector256.Create<ushort>(0xff80);
-        //     while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
-        //     {
-        //         var v0 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-        //         source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
-        //         // 0b00 ← utf16, 0b11 ← ascii
-        //         uint b0 = Vector256.Equals(v0 & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits();
-        //         if (b0 == 0U)
-        //         {
-        //             destination = ref TryWriteMarkerByte(ref destination, ref status);
-        //             v0.AsByte().StoreUnsafe(ref destination);
-        //             destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector256<byte>>());
-        //             continue;
-        //         }
+        if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) <= Unsafe.SizeOf<Vector256<ushort>>())
+        {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
+            Vector256<byte> narrow;
+            uint copyLength;
+            var filter = Vector256.Create<ushort>(0xff80);
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                var v0 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                // 0b00 ← utf16, 0b11 ← ascii
+                uint b0 = Vector256.Equals(v0 & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits();
+                if (b0 == 0U)
+                {
+                    destination = ref TryWriteMarkerByte(ref destination, ref status);
+                    v0.AsByte().StoreUnsafe(ref destination);
+                    destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector256<byte>>());
+                    continue;
+                }
 
-        //         if (Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
-        //         {
-        //             // no additional Vector256
-        //             narrow = Vector256.Narrow(v0, Vector256<ushort>.Zero);
-        //             break;
-        //         }
+                if (Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+                {
+                    // no additional Vector256
+                    narrow = Vector256.Narrow(v0, Vector256<ushort>.Zero);
+                    var b0tzc = BitOperations.TrailingZeroCount(~b0);
+                    if ((b0tzc >>> 1) + status >= 4)
+                    {
+                        destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
+                    }
+
+                    narrow.GetLower().StoreUnsafe(ref destination);
+                    destination = ref Unsafe.AddByteOffset(ref destination, b0tzc >>> 1);
+                    if (b0tzc == 32)
+                    {
+                        break;
+                    }
+
+                    destination = ref WriteMarkerByte(ref destination);
+                    b0 &= (uint.MaxValue << b0tzc);
+
+                    // 0b00 ← utf16, 0b11 ← ascii
+                    var c0 = b0 & (b0 >>> 2);
+                    c0 &= c0 >>> 4;
+                    if (c0 == 0U)
+                    {
+                        destination = ref TryWriteMarkerByte(ref destination, ref status);
+                        v0.AsByte().StoreUnsafe(ref destination);
+                        destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector256<byte>>());
+                        break;
+                    }
+                    
+                    while (c0 != 0UL)
+                    {
+                        var tzcNext = BitOperations.TrailingZeroCount(c0);
+                        var copyLengthNext = tzcNext - b0tzc;
+                        Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.AddByteOffset(ref Unsafe.As<Vector256<ushort>, byte>(ref v0), b0tzc), (uint)copyLengthNext);
+                        destination = ref Unsafe.AddByteOffset(ref destination, copyLengthNext);
+                        destination = ref WriteMarkerUInt16(ref destination);
+                        var copyAsciiLength = (BitOperations.TrailingZeroCount(~(c0 >>> tzcNext)) >>> 1) + 3;
+                        Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.AddByteOffset(ref Unsafe.As<Vector256<byte>, byte>(ref narrow), tzcNext >>> 1), (uint)copyAsciiLength);
+                        destination = ref Unsafe.AddByteOffset(ref destination, copyAsciiLength);
+                        destination = ref WriteMarkerByte(ref destination);
+                        c0 &= (uint.MaxValue << tzcNext);
+                        b0tzc = (copyAsciiLength << 1) + tzcNext;
+                    }
+
+                    // no 4 or more c0 ascii
+                    copyLength = 32 - (uint)b0tzc;
+                    if (copyLength != 0)
+                    {
+                        Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.SubtractByteOffset(ref Unsafe.As<char, byte>(ref source), copyLength), copyLength);
+                        destination = ref Unsafe.AddByteOffset(ref destination, copyLength);
+                    }
+                    break;
+                }
                 
-        //         var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-        //         source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
-        //         ulong rbits = Vector256.Equals(v1 & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits();
-        //         rbits <<= 32;
-        //         rbits |= b0;
-        //         // 0b11 ← utf16, 0b00 ← ascii
-        //         rbits = ~rbits;
-        //         narrow = Vector256.Narrow(v0, v1);
-        //         var tzc = BitOperations.TrailingZeroCount(rbits);
-        //         if ((tzc >>> 1) + status >= 4)
-        //         {
-        //             destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
-        //             narrow.StoreUnsafe(ref destination);
-        //             destination = ref Unsafe.AddByteOffset(ref destination, tzc);
-        //         }
+                var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                ulong rbits = Vector256.Equals(v1 & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits();
+                rbits <<= 32;
+                rbits |= b0;
+                // 0b11 ← utf16, 0b00 ← ascii
+                rbits = ~rbits;
+                narrow = Vector256.Narrow(v0, v1);
+                var tzc = BitOperations.TrailingZeroCount(rbits);
+                if ((tzc >>> 1) + status >= 4)
+                {
+                    destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
+                    narrow.StoreUnsafe(ref destination);
+                    destination = ref Unsafe.AddByteOffset(ref destination, tzc);
+                }
 
-        //         if (tzc == 64)
-        //         {
-        //             continue;
-        //         }
+                if (tzc == 64)
+                {
+                    continue;
+                }
                 
-        //         destination = ref WriteMarkerByte(ref destination);
-        //         rbits |= (1UL << tzc) - 1UL;
-        //         // 0b00 ← utf16, 0b11 ← ascii
-        //         var continuous = ~(rbits | (rbits >>> 2) | (rbits >>> 4) | (rbits >>> 6));
-        //         while (continuous != 0UL)
-        //         {
-        //             var tzcNext = BitOperations.TrailingZeroCount(continuous);
-        //             var copyLengthNext = tzcNext - tzc;
-        //             Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.SubtractByteOffset(ref Unsafe.As<char, byte>(ref source), 64 - tzc), (uint)copyLengthNext);
-        //             destination = ref Unsafe.AddByteOffset(ref destination, copyLengthNext);
-        //             destination = ref WriteMarkerUInt16(ref destination);
-        //             var copyAsciiLength = (BitOperations.TrailingZeroCount(~(continuous >>> tzcNext)) >>> 1) + 3;
-        //             Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.AddByteOffset(ref Unsafe.As<Vector256<byte>, byte>(ref narrow), tzcNext >>> 1), (uint)copyAsciiLength);
-        //             destination = ref Unsafe.AddByteOffset(ref destination, copyAsciiLength);
-        //             destination = ref WriteMarkerByte(ref destination);
-        //             continuous &= (ulong.MaxValue << tzcNext);
-        //             tzc = (copyAsciiLength << 1) + tzcNext;
-        //         }
+                destination = ref WriteMarkerByte(ref destination);
+                rbits |= (1UL << tzc) - 1UL;
+                // 0b00 ← utf16, 0b11 ← ascii
+                var continuous = ~rbits;
+                continuous |= continuous >>> 2;
+                continuous |= continuous >>> 4;
+                while (continuous != 0UL)
+                {
+                    var tzcNext = BitOperations.TrailingZeroCount(continuous);
+                    var copyLengthNext = tzcNext - tzc;
+                    Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.SubtractByteOffset(ref Unsafe.As<char, byte>(ref source), 64 - tzc), (uint)copyLengthNext);
+                    destination = ref Unsafe.AddByteOffset(ref destination, copyLengthNext);
+                    destination = ref WriteMarkerUInt16(ref destination);
+                    var copyAsciiLength = (BitOperations.TrailingZeroCount(~(continuous >>> tzcNext)) >>> 1) + 3;
+                    Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.AddByteOffset(ref Unsafe.As<Vector256<byte>, byte>(ref narrow), tzcNext >>> 1), (uint)copyAsciiLength);
+                    destination = ref Unsafe.AddByteOffset(ref destination, copyAsciiLength);
+                    destination = ref WriteMarkerByte(ref destination);
+                    continuous &= (ulong.MaxValue << tzcNext);
+                    tzc = (copyAsciiLength << 1) + tzcNext;
+                }
 
-        //         // no 4 or more continuous ascii
-        //         status = (uint)BitOperations.LeadingZeroCount(rbits);
-        //         var copyLength = 64 - (uint)tzc;
-        //         if (copyLength != 0)
-        //         {
-        //             Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.SubtractByteOffset(ref Unsafe.As<char, byte>(ref source), copyLength), copyLength);
-        //             destination = ref Unsafe.AddByteOffset(ref destination, copyLength);
-        //         }
-        //         continue;
-        //     }
-        //     sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
-        // }
+                // no 4 or more continuous ascii
+                status = (uint)BitOperations.LeadingZeroCount(rbits);
+                copyLength = 64 - (uint)tzc;
+                if (copyLength != 0)
+                {
+                    Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.SubtractByteOffset(ref Unsafe.As<char, byte>(ref source), copyLength), copyLength);
+                    destination = ref Unsafe.AddByteOffset(ref destination, copyLength);
+                }
+                continue;
+            }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<ushort>>());
+        }
 
         while (!Unsafe.AreSame(ref source, ref sourceEnd))
         {
