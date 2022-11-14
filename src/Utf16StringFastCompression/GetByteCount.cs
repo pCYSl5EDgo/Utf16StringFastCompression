@@ -119,6 +119,62 @@ partial class Utf16CompressionEncoding
         nint answer = 0;
         scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
         var status = 0U;
+        if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= Unsafe.SizeOf<Vector256<byte>>())
+        {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>());
+            var filter = Vector256.Create((ushort)0xff80);
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                var vec = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                // 00 → unicode, 11 → ascii
+                var bits = Vector256.Equals(vec & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits();
+                if (bits == 0U)
+                {
+                    answer += ByteCountTransitFromAsciiToUnicode(ref status) + 32;
+                    source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                    continue;
+                }
+                if (bits == uint.MaxValue)
+                {
+                    answer += ByteCountTransitFromUnicodeToAscii(ref status) + 16;
+                    source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                    continue;
+                }
+                if ((bits & 1U) == 0U)
+                {
+                    answer += ByteCountTransitFromAsciiToUnicode(ref status);
+                    var shift = bits & (bits >>> 2) & (bits >>> 4) & (bits >>> 6);
+                    if (shift == 0U)
+                    {
+                        answer += 32;
+                        source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                        status = (uint)(BitOperations.LeadingZeroCount(~bits) >>> 1);
+                        continue;
+                    }
+
+                    var copySize = BitOperations.TrailingZeroCount(shift);
+                    answer += copySize + 2;
+                    source = ref Unsafe.AddByteOffset(ref source, copySize);
+                    status = 4;
+                    continue;
+                }
+                var asciiLength = BitOperations.TrailingZeroCount(~bits) >>> 1;
+                if (asciiLength + status < 4)
+                {
+                    status = 0;
+                    var copySize = (asciiLength + 1) << 1;
+                    answer += copySize;
+                    source = ref Unsafe.AddByteOffset(ref source, copySize);
+                }
+                else
+                {
+                    answer += ByteCountTransitFromUnicodeToAscii(ref status) + asciiLength + 1;
+                    source = ref Unsafe.Add(ref source, asciiLength);
+                    status = 0;
+                }
+            }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>());
+        }
         if (Vector128.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= Unsafe.SizeOf<Vector128<byte>>())
         {
             sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>());
