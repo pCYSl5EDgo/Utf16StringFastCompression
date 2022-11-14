@@ -19,155 +19,153 @@ partial class Utf16CompressionEncoding
     /// <param name="sourceLength">Source Char Length</param>
     /// <param name="destination">Destination Byte Reference</param>
     /// <returns>The number of encoded bytes.</returns>
-    // public static nint GetBytes(scoped ref char source, nint sourceLength, scoped ref byte destination)
-    // {
-    //     if (sourceLength < 4)
-    //     {
-    //         if (sourceLength <= 0)
-    //         {
-    //             return 0;
-    //         }
-
-    //         sourceLength <<= 1;
-    //         Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.As<char, byte>(ref source), (uint)sourceLength);
-    //         return sourceLength;
-    //     }
-
-    //     scoped ref byte initialDestination = ref destination;
-    //     scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
-    //     var status = 0U;
-    //     if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector256<byte>>() << 1))
-    //     {
-    //         sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
-    //         var isAscii = status != 0U;
-    //         var filter = Vector256.Create<ushort>(0xff80);
-    //         while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
-    //         {
-    //             var v0 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-    //             source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
-    //             if ((v0 & filter) != Vector256<ushort>.Zero)
-    //             {
-    //                 if (isAscii)
-    //                 {
-    //                     isAscii = false;
-    //                     destination = ref Write(ref destination, byte.MaxValue);
-    //                 }
-
-    //                 destination = ref Write(ref destination, ref v0);
-    //                 continue;
-    //             }
-
-    //             if (!isAscii)
-    //             {
-    //                 destination = ref Write(ref destination, ushort.MaxValue);
-    //             }
-
-    //             var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-    //             source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
-    //             var packed = Vector256.Narrow(v0, v1);
-    //             isAscii = (v1 & filter) == Vector256<ushort>.Zero;
-    //             if (isAscii)
-    //             {
-    //                 destination = ref Write(ref destination, ref packed);
-    //                 continue;
-    //             }
-                
-    //             var lower = packed.GetLower();
-    //             destination = ref Write(ref destination, ref lower);
-    //             destination = ref Write(ref destination, byte.MaxValue);
-    //             destination = ref Write(ref destination, ref v1);
-    //         }
-    //         sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
-    //         status = isAscii ? 4U : 0U;
-    //     }
-
-    //     if (Vector128.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector128<byte>>() << 1))
-    //     {
-    //         sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
-    //         var isAscii = status != 0U;
-    //         var filter = Vector128.Create<ushort>(0xff80);
-    //         while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
-    //         {
-    //             var v0 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-    //             source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
-    //             if ((v0 & filter) != Vector128<ushort>.Zero)
-    //             {
-    //                 if (isAscii)
-    //                 {
-    //                     isAscii = false;
-    //                     destination = ref Write(ref destination, byte.MaxValue);
-    //                 }
-
-    //                 destination = ref Write(ref destination, ref v0);
-    //                 continue;
-    //             }
-
-    //             if (!isAscii)
-    //             {
-    //                 destination = ref Write(ref destination, ushort.MaxValue);
-    //             }
-
-    //             var v1 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
-    //             source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
-    //             var packed = Vector128.Narrow(v0, v1);
-    //             isAscii = (v1 & filter) == Vector128<ushort>.Zero;
-    //             if (isAscii)
-    //             {
-    //                 destination = ref Write(ref destination, ref packed);
-    //                 continue;
-    //             }
-
-    //             Unsafe.WriteUnaligned(ref destination, packed.AsUInt64().GetElement(0));
-    //             // packed.GetLower().StoreUnsafe(ref destination);
-    //             // I don't know which is better.
-    //             destination = ref Unsafe.AddByteOffset(ref destination, Unsafe.SizeOf<Vector128<byte>>() >>> 1);
-    //             destination = ref Write(ref destination, byte.MaxValue);
-    //             destination = ref Write(ref destination, ref v1);
-    //         }
-    //         sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
-    //         status = isAscii ? 4U : 0U;
-    //     }
-
-    //     while (!Unsafe.AreSame(ref source, ref sourceEnd))
-    //     {
-    //         var value = (ushort)source;
-    //         source = ref Unsafe.Add(ref source, 1);
-    //         if (value >= 0x80)
-    //         {
-    //             destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
-    //             destination = ref Write(ref destination, value);
-    //             continue;
-    //         }
-
-    //         if (++status < 4)
-    //         {
-    //             destination = ref Write(ref destination, value);
-    //             continue;
-    //         }
-
-    //         if (status == 4)
-    //         {
-    //             destination = ref TransitFromUnicodeToAscii(ref destination);
-    //         }
-            
-    //         status = 4;
-    //         destination = ref Write(ref destination, (byte)value);
-    //     }
-
-    //     return Unsafe.ByteOffset(ref initialDestination, ref destination);
-    // }
-
-    // [EditorBrowsable(EditorBrowsableState.Never)]
     public static nint GetBytes(scoped ref char source, nint sourceLength, scoped ref byte destination)
     {
         if (sourceLength < 4)
         {
-            sourceLength <<= 1;
             if (sourceLength <= 0)
             {
                 return 0;
             }
 
+            sourceLength <<= 1;
+            Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.As<char, byte>(ref source), (uint)sourceLength);
+            return sourceLength;
+        }
+
+        scoped ref byte initialDestination = ref destination;
+        scoped ref char sourceEnd = ref Unsafe.Add(ref source, sourceLength);
+        var status = 0U;
+        if (Vector256.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector256<byte>>() << 1))
+        {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
+            var isAscii = status != 0U;
+            var filter = Vector256.Create<ushort>(0xff80);
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                var v0 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                if ((v0 & filter) != Vector256<ushort>.Zero)
+                {
+                    if (isAscii)
+                    {
+                        isAscii = false;
+                        destination = ref Write(ref destination, byte.MaxValue);
+                    }
+
+                    destination = ref Write(ref destination, ref v0);
+                    continue;
+                }
+
+                if (!isAscii)
+                {
+                    destination = ref Write(ref destination, ushort.MaxValue);
+                }
+
+                var v1 = Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
+                var packed = Vector256.Narrow(v0, v1);
+                isAscii = (v1 & filter) == Vector256<ushort>.Zero;
+                if (isAscii)
+                {
+                    destination = ref Write(ref destination, ref packed);
+                    continue;
+                }
+                
+                var lower = packed.GetLower();
+                destination = ref Write(ref destination, ref lower);
+                destination = ref Write(ref destination, byte.MaxValue);
+                destination = ref Write(ref destination, ref v1);
+            }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector256<byte>>() << 1);
+            status = isAscii ? 4U : 0U;
+        }
+
+        if (Vector128.IsHardwareAccelerated && Unsafe.ByteOffset(ref source, ref sourceEnd) >= (Unsafe.SizeOf<Vector128<byte>>() << 1))
+        {
+            sourceEnd = ref Unsafe.SubtractByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
+            var isAscii = status != 0U;
+            var filter = Vector128.Create<ushort>(0xff80);
+            while (!Unsafe.IsAddressGreaterThan(ref source, ref sourceEnd))
+            {
+                var v0 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                if ((v0 & filter) != Vector128<ushort>.Zero)
+                {
+                    if (isAscii)
+                    {
+                        isAscii = false;
+                        destination = ref Write(ref destination, byte.MaxValue);
+                    }
+
+                    destination = ref Write(ref destination, ref v0);
+                    continue;
+                }
+
+                if (!isAscii)
+                {
+                    destination = ref Write(ref destination, ushort.MaxValue);
+                }
+
+                var v1 = Vector128.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source));
+                source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector128<byte>>());
+                var packed = Vector128.Narrow(v0, v1);
+                isAscii = (v1 & filter) == Vector128<ushort>.Zero;
+                if (isAscii)
+                {
+                    destination = ref Write(ref destination, ref packed);
+                    continue;
+                }
+
+                destination = ref Write(ref destination, packed.AsUInt64().GetElement(0));
+                // packed.GetLower().StoreUnsafe(ref destination);
+                // I don't know which is better.
+                destination = ref Write(ref destination, byte.MaxValue);
+                destination = ref Write(ref destination, ref v1);
+            }
+            sourceEnd = ref Unsafe.AddByteOffset(ref sourceEnd, Unsafe.SizeOf<Vector128<byte>>() << 1);
+            status = isAscii ? 4U : 0U;
+        }
+
+        while (!Unsafe.AreSame(ref source, ref sourceEnd))
+        {
+            var value = (ushort)source;
+            source = ref Unsafe.Add(ref source, 1);
+            if (value >= 0x80)
+            {
+                destination = ref TransitFromAsciiToUnicode(ref destination, ref status);
+                destination = ref Write(ref destination, value);
+                continue;
+            }
+
+            if (++status < 4)
+            {
+                destination = ref Write(ref destination, value);
+                continue;
+            }
+
+            if (status == 4)
+            {
+                destination = ref TransitFromUnicodeToAscii(ref destination);
+            }
+            
+            status = 4;
+            destination = ref Write(ref destination, (byte)value);
+        }
+
+        return Unsafe.ByteOffset(ref initialDestination, ref destination);
+    }
+
+    public static nint GetBytesDeterministic(scoped ref char source, nint sourceLength, scoped ref byte destination)
+    {
+        if (sourceLength < 4)
+        {
+            if (sourceLength <= 0)
+            {
+                return 0;
+            }
+
+            sourceLength <<= 1;
             Unsafe.CopyBlockUnaligned(ref destination, ref Unsafe.As<char, byte>(ref source), (uint)sourceLength);
             return sourceLength;
         }
