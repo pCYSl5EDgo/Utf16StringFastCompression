@@ -1736,6 +1736,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 3.0;
 Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersStatisticsCookie statementWikimedia FoundationPowered by MediaWiki
 """
     )]
+    [InlineData("北極丸いは南極柔らかお肌すべすべ!")]
     public void MixTest(string value)
     {
         Assert.True(value.Length >= 8);
