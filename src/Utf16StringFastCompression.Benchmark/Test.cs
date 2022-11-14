@@ -1692,7 +1692,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 3.0;
 Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersStatisticsCookie statementWikimedia FoundationPowered by MediaWiki
 """
     )]
-    public string Text { get; set; }
+    public string Text { get; set; } = "";
 
     [Benchmark]
     public int SerializeFast()
@@ -1703,10 +1703,39 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     }
 
     [Benchmark]
+    public int SerializeDeterministic()
+    {
+        var array = new byte[Utf16CompressionEncoding.GetMaxByteCount(Text.Length)];
+        var length = Utf16CompressionEncoding.GetBytesDeterministic(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length, ref MemoryMarshal.GetArrayDataReference(array));
+        return (int)length;
+    }
+
+    [Benchmark]
     public int SerializeUtf8()
     {
         var array = new byte[Encoding.UTF8.GetMaxByteCount(Text.Length)];
         var length = Encoding.UTF8.GetBytes(Text.AsSpan(), array.AsSpan());
+        return length;
+    }
+
+    [Benchmark]
+    public int ByteCountFast()
+    {
+        var length = Utf16CompressionEncoding.GetByteCount(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length);
+        return (int)length;
+    }
+
+    [Benchmark]
+    public int ByteCountDeterministic()
+    {
+        var length = Utf16CompressionEncoding.GetByteCountDeterministic(ref MemoryMarshal.GetReference(Text.AsSpan()), Text.Length);
+        return (int)length;
+    }
+
+    [Benchmark]
+    public int ByteCountUtf8()
+    {
+        var length = Encoding.UTF8.GetByteCount(Text.AsSpan());
         return length;
     }
 }
@@ -3397,7 +3426,7 @@ Text is available under the Creative Commons Attribution-ShareAlike License 3.0;
 Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersStatisticsCookie statementWikimedia FoundationPowered by MediaWiki
 """
     )]
-    public string? Text { get; set; }
+    public string Text { get; set; } = "";
 
     private ReadOnlyMemory<byte> fastBytes = default;
     private ReadOnlyMemory<byte> utf8Bytes = default;
@@ -3424,6 +3453,20 @@ Privacy policyAbout WikipediaDisclaimersContact WikipediaMobile viewDevelopersSt
     {
         var array = new char[Encoding.UTF8.GetMaxCharCount(utf8Bytes.Length)];
         var length = Encoding.UTF8.GetChars(utf8Bytes.Span, array.AsSpan());
+        return length;
+    }
+
+    [Benchmark]
+    public int CharCountFast()
+    {
+        var length = Utf16CompressionEncoding.GetCharCount(ref MemoryMarshal.GetReference(fastBytes.Span), fastBytes.Length);
+        return (int)length;
+    }
+
+    [Benchmark]
+    public int CharCountUtf8()
+    {
+        var length = Encoding.UTF8.GetCharCount(utf8Bytes.Span);
         return length;
     }
 }
