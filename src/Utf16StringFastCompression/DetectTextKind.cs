@@ -2,6 +2,10 @@ namespace Utf16StringFastCompression;
 
 partial class Utf16CompressionEncoding
 {
+    public static TextKind DetectTextKind(ReadOnlySpan<char> source) => DetectTextKind(ref MemoryMarshal.GetReference(source), source.Length);
+    
+    public static TextKind DetectTextKind(char[] source, int sourceLength) => DetectTextKind(ref MemoryMarshal.GetArrayDataReference(source), sourceLength);
+
     public static TextKind DetectTextKind(ref char source, nint sourceLength)
     {
         if (Unsafe.IsNullRef(ref source) || sourceLength <= 0)

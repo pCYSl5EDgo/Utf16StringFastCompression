@@ -5,7 +5,7 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>11</LangVersion>
-		<Version>0.0.7</Version>
+		<Version>0.0.8</Version>
 		<Authors>pCYSl5EDgo</Authors>
 		<PackageId>Utf16StringFastCompression</PackageId>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
