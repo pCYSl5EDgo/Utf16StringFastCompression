@@ -46,23 +46,23 @@ ByteCount = (length << 1) - ec4Accum + (1 + difAccum * 3 >>> 1)
             uint bitCarrier = 0;
             nint loopCount = (sourceLength - 1) >>> 4;
             var restLength = (int)(sourceLength - (loopCount << 4));
-            // if (Bmi2.IsSupported)
-            // {
-            //     while (loopCount >= 3)
-            //     {
-            //         ulong bits = (ulong)bitCarrier | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source)) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 4)
-            //             | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref Unsafe.AddByteOffset(ref source, 32))) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 20)
-            //             | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref Unsafe.AddByteOffset(ref source, 64))) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 36);
-            //         bitCarrier = (uint)((bits >>> 48) & 0b1111UL);
-            //         var c4 = bits & (bits >>> 1) & (bits >>> 2) & (bits >>> 3);
-            //         c4  |= (c4 << 1) | (c4 << 2) | (c4 << 3);
-            //         asciiAccum += BitOperations.PopCount(c4) - ((bitCarrier == 0b1111U ? 1 : 0) << 2);
-            //         changeAccum += BitOperations.PopCount((c4 ^ (c4 >>> 1)) & ((1UL << 51) - 1UL));
-            //         source = ref Unsafe.AddByteOffset(ref source, 96);
-            //         loopCount -= 3;
-            //     }
-            //     bitCarrier = GetBitCarrierConversionTable()[(int)bitCarrier];
-            // }
+            if (Bmi2.IsSupported)
+            {
+                while (loopCount >= 3)
+                {
+                    ulong bits = (ulong)bitCarrier | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source)) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 4)
+                        | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref Unsafe.AddByteOffset(ref source, 32))) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 20)
+                        | ((ulong)(Bmi2.ParallelBitExtract(Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref Unsafe.AddByteOffset(ref source, 64))) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits(), 0x55555555U)) << 36);
+                    bitCarrier = (uint)((bits >>> 48) & 0xFUL);
+                    var c4 = bits & (bits >>> 1) & (bits >>> 2) & (bits >>> 3);
+                    c4  |= (c4 << 1) | (c4 << 2) | (c4 << 3);
+                    asciiAccum += BitOperations.PopCount(c4) - ((bitCarrier == 0xFU ? 1 : 0) << 2);
+                    changeAccum += BitOperations.PopCount((c4 ^ (c4 >>> 1)) & ((1UL << 51) - 1UL));
+                    source = ref Unsafe.AddByteOffset(ref source, 96);
+                    loopCount -= 3;
+                }
+                bitCarrier = GetBitCarrierConversionTable()[(int)bitCarrier];
+            }
             while (--loopCount >= 0)
             {
                 ulong bits = (((ulong)Vector256.Equals(Vector256.LoadUnsafe(ref Unsafe.As<char, ushort>(ref source)) & filter, Vector256<ushort>.Zero).AsByte().ExtractMostSignificantBits()) << 8) | (ulong)bitCarrier;
