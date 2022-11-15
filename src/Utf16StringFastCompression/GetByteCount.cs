@@ -1,6 +1,4 @@
-﻿using System.Runtime.Intrinsics.X86;
-
-namespace Utf16StringFastCompression;
+﻿namespace Utf16StringFastCompression;
 
 partial class Utf16CompressionEncoding
 {

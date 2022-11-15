@@ -25,6 +25,7 @@
 		<Using Include="System.Runtime.CompilerServices" />
 		<Using Include="System.Runtime.InteropServices" />
 		<Using Include="System.Runtime.Intrinsics" />
+		<Using Include="System.Runtime.Intrinsics.X86" />
 	</ItemGroup>
 
 </Project>
