@@ -55,7 +55,7 @@ partial class Utf16CompressionEncoding
                 if (bits == uint.MaxValue)
                 {
                     destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
-                    var narrow = Vector128.Narrow(vec.GetLower(), vec.GetUpper());
+                    var narrow = Vector256.Narrow(vec, vec).GetLower();
                     destination = ref Write(ref destination, ref narrow);
                     source = ref Unsafe.AddByteOffset(ref source, Unsafe.SizeOf<Vector256<byte>>());
                     continue;
@@ -91,7 +91,7 @@ partial class Utf16CompressionEncoding
                 else
                 {
                     destination = ref TransitFromUnicodeToAscii(ref destination, ref status);
-                    var narrow = Vector128.Narrow(vec.GetLower(), vec.GetUpper());
+                    var narrow = Vector256.Narrow(vec, vec).GetLower();
                     destination = ref Copy(ref destination, ref narrow, (uint)asciiLength);
                     destination = ref Write(ref destination, byte.MaxValue);
                     source = ref Unsafe.Add(ref source, asciiLength);
